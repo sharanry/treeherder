@@ -5,6 +5,7 @@ from graphene_django.types import DjangoObjectType
 from treeherder.model import error_summary
 from treeherder.model.models import *
 from treeherder.webapp.graphql.types import ObjectScalar
+import helpers
 
 
 class JobDetailGraph(DjangoObjectType):
@@ -119,14 +120,25 @@ class PushGraph(DjangoObjectType):
         filter_fields = ('revision', )
         interfaces = (graphene.relay.Node, )
 
-    jobs = DjangoFilterConnectionField(JobGraph)
+    jobs = helpers.OptimizableFilterConnectionField(JobGraph)
 
     def resolve_jobs(self, args, context, info):
-        return Job.objects.filter(push=self, **args)
+        field_map = {
+            "buildPlatform": ("build_platform", "select"),
+            "jobLog": ("job_log", "prefetch"),
+            "jobType": ("job_type", "select"),
+            "jobGroup": ("job_type__job_group", "select"),
+            "failureClassification": ("failure_classification", "prefetch"),
+            "failureLine": ("job_log__failure_line", "prefetch"),
+            "group": ("job_log__failure_line__group", "prefetch"),
+        }
+        result = Job.objects.filter(push=self, **args)
+        result = helpers.optimize(result, info, field_map)
+        return result
 
 
 class Query(graphene.ObjectType):
-    all_jobs = DjangoFilterConnectionField(JobGraph)
+    all_jobs = helpers.OptimizableFilterConnectionField(JobGraph)
     all_job_details = DjangoFilterConnectionField(JobDetailGraph)
     all_build_platforms = graphene.List(BuildPlatformGraph)
     all_machine_platforms = graphene.List(MachinePlatformGraph)
