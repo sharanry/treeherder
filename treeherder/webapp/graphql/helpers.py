@@ -1,5 +1,6 @@
-from graphql.utils.ast_to_dict import ast_to_dict
 from graphene_django.filter import DjangoFilterConnectionField
+from graphql.utils.ast_to_dict import ast_to_dict
+
 
 def collect_fields(node):
     non_fields = ["edges", "node"]
@@ -34,6 +35,7 @@ def optimize(qs, info, field_map):
 
     return qs
 
+
 class OptimizableFilterConnectionField(DjangoFilterConnectionField):
 
     @staticmethod
@@ -48,15 +50,15 @@ class OptimizableFilterConnectionField(DjangoFilterConnectionField):
         # /pull/126
 
         assert not (
-        default_queryset.query.low_mark and queryset.query.low_mark), (
-            'Received two sliced querysets (low mark) in the connection, '
-            'please slice only in one.'
-        )
+            default_queryset.query.low_mark and queryset.query.low_mark), (
+                'Received two sliced querysets (low mark) in the connection, '
+                'please slice only in one.'
+            )
         assert not (
-        default_queryset.query.high_mark and queryset.query.high_mark), (
-            'Received two sliced querysets (high mark) in the connection, '
-            'please slice only in one.'
-        )
+            default_queryset.query.high_mark and queryset.query.high_mark), (
+                'Received two sliced querysets (high mark) in the connection, '
+                'please slice only in one.'
+            )
         low = default_queryset.query.low_mark or queryset.query.low_mark
         high = default_queryset.query.high_mark or queryset.query.high_mark
         default_queryset.query.clear_limits()
